@@ -14,12 +14,12 @@ A mobile-first reading tracker with notes and flashcard review, shipped as a **n
 reading-tracker/
 ├── CLAUDE.md
 ├── .github/workflows/build.yml     # CI: builds debug + release APK on push, uploads as artifact
-├── settings.gradle
-├── build.gradle
+├── settings.gradle.kts
+├── build.gradle.kts
 ├── gradle/ + gradlew               # Gradle wrapper (committed so CI needs no setup)
 ├── logo.svg                        # master logo (book icon, see below)
 └── app/
-    ├── build.gradle                # minSdk 26, targetSdk 34, Kotlin, single Activity
+    ├── build.gradle.kts            # minSdk 26, targetSdk 34, Kotlin, single Activity
     └── src/main/
         ├── AndroidManifest.xml
         ├── java/.../MainActivity.kt   # WebView loading file:///android_asset/index.html
