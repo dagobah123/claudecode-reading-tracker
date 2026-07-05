@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Reading Tracker</title>
+<style>
+  :root {
+    --bg: #0b0a1f;
+    --surface: #1a1744;
+    --surface-2: #221d5c;
+    --border: #322c6e;
+    --text: #eef2ff;
+    --text-dim: #a5adf0;
+    --text-faint: #7a7fc4;
+    --primary: #6366f1;
+    --accent: #f59e0b;
+    --danger: #f87171;
+    --success: #34d399;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, Roboto, "Segoe UI", sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input, textarea { user-select: text; -webkit-user-select: text; }
+  #app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+  .brand svg { width: 30px; height: 30px; flex-shrink: 0; }
+  .streak-badge {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;
+  }
+
+  main#view { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 32px; position: relative; }
+
+  .bottomnav {
+    display: flex;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .navbtn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; min-height: 58px; background: none; border: none; color: var(--text-dim);
+    font-size: 11px; font-family: inherit; position: relative;
+  }
+  .navbtn .icon { font-size: 20px; line-height: 1; }
+  .navbtn.active { color: var(--accent); }
+  .navbtn .badge {
+    position: absolute; top: 4px; right: calc(50% - 22px); min-width: 16px; height: 16px;
+    background: var(--danger); color: #1a1744; font-size: 10px; font-weight: 700;
+    border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 4px;
+  }
+
+  h1, h2, h3 { margin: 0 0 12px; }
+  h2 { font-size: 19px; }
+  h3 { font-size: 15px; color: var(--text-dim); }
+  p { margin: 0 0 8px; line-height: 1.5; }
+  .muted { color: var(--text-dim); font-size: 13px; }
+  .faint { color: var(--text-faint); font-size: 12px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 12px;
+  }
+  .card.tap { cursor: pointer; }
+
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+  .gap-sm { gap: 6px; }
+
+  .btn {
+    min-height: 44px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600;
+    font-family: inherit; padding: 0 18px; display: inline-flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-accent { background: var(--accent); color: #1a1744; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+  .btn-block { width: 100%; }
+  .btn-icon { min-width: 44px; padding: 0; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 6px; }
+  .field input, .field textarea, .field select {
+    width: 100%; min-height: 44px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 0 12px; font-size: 15px; font-family: inherit;
+  }
+  .field textarea { min-height: 90px; padding: 10px 12px; resize: vertical; }
+  .checkline { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .checkline input { width: 20px; height: 20px; flex-shrink: 0; }
+
+  .progress-track { height: 10px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); }
+
+  .tag { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 600; }
+  .tag-reading { background: rgba(99,102,241,.22); color: #a5b4fc; }
+  .tag-finished { background: rgba(52,211,153,.2); color: var(--success); }
+  .tag-abandoned { background: rgba(248,113,113,.2); color: var(--danger); }
+
+  .stepper { display: flex; align-items: center; gap: 10px; }
+  .stepper .btn { width: 44px; padding: 0; font-size: 20px; }
+  .stepper input {
+    flex: 1; text-align: center; min-height: 44px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 16px;
+  }
+
+  .empty { text-align: center; padding: 40px 16px; color: var(--text-dim); }
+  .empty .icon { font-size: 40px; display: block; margin-bottom: 10px; }
+
+  .fab {
+    position: fixed; right: 20px; bottom: 90px; width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); color: #1a1744; font-size: 26px; border: none;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,.5); z-index: 10;
+  }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-sheet {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto;
+  }
+
+  .note-item { border-top: 1px solid var(--border); padding: 12px 0; }
+  .note-item:first-child { border-top: none; padding-top: 0; }
+  .note-quote { border-left: 3px solid var(--accent); padding-left: 10px; font-style: italic; }
+
+  .flashcard {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    padding: 30px 20px; min-height: 240px; display: flex; flex-direction: column;
+    justify-content: center; text-align: center; gap: 14px;
+  }
+  .flashcard .source { font-size: 13px; color: var(--text-dim); }
+  .flashcard .content { font-size: 17px; line-height: 1.5; }
+
+  .barchart { display: flex; align-items: flex-end; gap: 8px; height: 100px; margin-top: 8px; }
+  .barchart .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .barchart .bar { width: 100%; background: linear-gradient(180deg, var(--accent), var(--primary)); border-radius: 4px 4px 0 0; min-height: 3px; }
+  .barchart .bar-label { font-size: 10px; color: var(--text-faint); }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-tile { background: var(--surface-2); border-radius: 12px; padding: 12px; }
+  .stat-tile .num { font-size: 22px; font-weight: 700; }
+  .stat-tile .label { font-size: 12px; color: var(--text-dim); }
+
+  textarea.jsonbox { width: 100%; min-height: 140px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-size: 12px; font-family: monospace; padding: 10px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%);
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 18px; border-radius: 20px; font-size: 14px; z-index: 100;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="64" cy="64" r="60" fill="#312e81"/>
+        <path d="M64 42c-8-6-20-8-30-6v52c10-2 22 0 30 6 8-6 20-8 30-6V36c-10-2-22 0-30 6z" fill="#eef2ff"/>
+        <path d="M64 42v52" stroke="#c7d2fe" stroke-width="3"/>
+        <path d="M40 50c6-1 12 0 17 2M40 60c6-1 12 0 17 2M40 70c6-1 12 0 17 2M71 52c5-2 11-3 17-2M71 62c5-2 11-3 17-2M71 72c5-2 11-3 17-2" stroke="#818cf8" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <path d="M82 30v26l6-5 6 5V30z" fill="#f59e0b"/>
+      </svg>
+      <span>Reading Tracker</span>
+    </div>
+    <div class="streak-badge" id="streakBadge">🔥 0</div>
+  </header>
+
+  <main id="view"></main>
+
+  <nav class="bottomnav">
+    <button class="navbtn" data-nav="library"><span class="icon">📚</span><span>Library</span></button>
+    <button class="navbtn" data-nav="review"><span class="icon">🃏</span><span>Review</span><span class="badge" id="reviewBadge" hidden></span></button>
+    <button class="navbtn" data-nav="stats"><span class="icon">📊</span><span>Stats</span></button>
+    <button class="navbtn" data-nav="settings"><span class="icon">⚙️</span><span>Settings</span></button>
+  </nav>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "readingTrackerData";
+  var state = null;
+  var nav = { view: "library" };
+  var reviewQueue = [];
+  var reviewIndex = 0;
+  var reviewRevealed = false;
+
+  // ---------- persistence ----------
+
+  function defaultData() {
+    return { books: [], logs: [], notes: [] };
+  }
+
+  function loadData() {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultData();
+    try {
+      var parsed = JSON.parse(raw);
+      return {
+        books: Array.isArray(parsed.books) ? parsed.books : [],
+        logs: Array.isArray(parsed.logs) ? parsed.logs : [],
+        notes: Array.isArray(parsed.notes) ? parsed.notes : []
+      };
+    } catch (e) {
+      return defaultData();
+    }
+  }
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    updateBadges();
+  }
+
+  // ---------- utils ----------
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+
+  function fmtDate(d) {
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
+  function todayStr() { return fmtDate(new Date()); }
+
+  function addDays(dateStr, n) {
+    var d = new Date(dateStr + "T00:00:00");
+    d.setDate(d.getDate() + n);
+    return fmtDate(d);
+  }
+
+  function niceDate(dateStr) {
+    var d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function getBook(id) { return state.books.find(function (b) { return b.id === id; }); }
+
+  function fval(form, name) {
+    var el = form.querySelector('[name="' + name + '"]');
+    return el ? el.value : "";
+  }
+
+  function fchecked(form, name) {
+    var el = form.querySelector('[name="' + name + '"]');
+    return !!(el && el.checked);
+  }
+
+  // ---------- toast / confirm ----------
+
+  function toast(msg) {
+    var root = document.getElementById("toastRoot");
+    root.innerHTML = '<div class="toast">' + escapeHtml(msg) + "</div>";
+    setTimeout(function () { root.innerHTML = ""; }, 1800);
+  }
+
+  function showConfirm(message, onYes) {
+    var root = document.getElementById("modalRoot");
+    root.innerHTML =
+      '<div class="modal-overlay" data-action="closeModal">' +
+        '<div class="modal-sheet">' +
+          "<p>" + escapeHtml(message) + "</p>" +
+          '<div class="btn-row">' +
+            '<button class="btn btn-outline" data-action="closeModal">Cancel</button>' +
+            '<button class="btn btn-danger" id="confirmYes">Confirm</button>' +
+          "</div>" +
+        "</div>" +
+      "</div>";
+    document.getElementById("confirmYes").addEventListener("click", function () {
+      closeModal();
+      onYes();
+    });
+  }
+
+  function closeModal() { document.getElementById("modalRoot").innerHTML = ""; }
+
+  // ---------- router ----------
+
+  function navigateTo(view, params) {
+    nav = Object.assign({ view: view }, params || {});
+    history.pushState(nav, "");
+    render();
+  }
+
+  function replaceNav(view, params) {
+    nav = Object.assign({ view: view }, params || {});
+    history.replaceState(nav, "");
+    render();
+  }
+
+  window.addEventListener("popstate", function (e) {
+    nav = e.state || { view: "library" };
+    render();
+  });
+
+  // ---------- streak / stats ----------
+
+  function loggedDateSet() {
+    var set = {};
+    state.logs.forEach(function (l) { set[l.date] = true; });
+    return set;
+  }
+
+  function currentStreak() {
+    var days = loggedDateSet();
+    var cursor = todayStr();
+    if (!days[cursor]) cursor = addDays(cursor, -1);
+    var streak = 0;
+    while (days[cursor]) {
+      streak++;
+      cursor = addDays(cursor, -1);
+    }
+    return streak;
+  }
+
+  function totalPagesRead() {
+    return state.logs.reduce(function (sum, l) { return sum + (l.pagesRead || 0); }, 0);
+  }
+
+  function avgPagesPerActiveDay() {
+    var days = loggedDateSet();
+    var count = Object.keys(days).length;
+    if (count === 0) return 0;
+    return Math.round(totalPagesRead() / count);
+  }
+
+  function last7DaysPages() {
+    var out = [];
+    for (var i = 6; i >= 0; i--) {
+      var date = addDays(todayStr(), -i);
+      var pages = state.logs.filter(function (l) { return l.date === date; })
+        .reduce(function (s, l) { return s + (l.pagesRead || 0); }, 0);
+      out.push({ date: date, pages: pages });
+    }
+    return out;
+  }
+
+  function updateBadges() {
+    document.getElementById("streakBadge").textContent = "🔥 " + currentStreak();
+    var due = state.notes.filter(function (n) { return n.srs.dueDate <= todayStr(); }).length;
+    var badge = document.getElementById("reviewBadge");
+    if (due > 0) { badge.hidden = false; badge.textContent = due > 99 ? "99+" : due; }
+    else { badge.hidden = true; }
+  }
+
+  // ---------- render dispatch ----------
+
+  function render() {
+    document.querySelectorAll(".navbtn").forEach(function (btn) {
+      var isLibraryish = nav.view === "library" || nav.view === "bookDetail" || nav.view === "bookForm";
+      var active =
+        (btn.dataset.nav === "library" && isLibraryish) ||
+        btn.dataset.nav === nav.view;
+      btn.classList.toggle("active", !!active);
+    });
+
+    var el = document.getElementById("view");
+    if (nav.view === "bookDetail") el.innerHTML = renderBookDetail(nav.bookId);
+    else if (nav.view === "bookForm") el.innerHTML = renderBookForm(nav.bookId);
+    else if (nav.view === "review") el.innerHTML = renderReview();
+    else if (nav.view === "stats") el.innerHTML = renderStats();
+    else if (nav.view === "settings") el.innerHTML = renderSettings();
+    else el.innerHTML = renderLibrary();
+
+    el.scrollTop = 0;
+    updateBadges();
+  }
+
+  // ---------- library view ----------
+
+  function renderLibrary() {
+    if (state.books.length === 0) {
+      return (
+        '<div class="empty">' +
+          '<span class="icon">📚</span>' +
+          "<p>No books yet.</p>" +
+          '<p class="faint">Tap the + button to add your first book.</p>' +
+        "</div>" +
+        '<button class="fab" data-action="addBook">+</button>'
+      );
+    }
+    var statusOrder = { reading: 0, finished: 1, abandoned: 2 };
+    var books = state.books.slice().sort(function (a, b) {
+      return statusOrder[a.status] - statusOrder[b.status] || b.dateAdded.localeCompare(a.dateAdded);
+    });
+    var html = books.map(function (b) {
+      var pct = b.totalPages > 0 ? clamp(Math.round((b.currentPage / b.totalPages) * 100), 0, 100) : 0;
+      return (
+        '<div class="card tap" data-action="openBook" data-id="' + b.id + '">' +
+          '<div class="row">' +
+            "<h3 style=\"color:var(--text);font-size:16px;margin:0;\">" + escapeHtml(b.title) + "</h3>" +
+            '<span class="tag tag-' + b.status + '">' + b.status + "</span>" +
+          "</div>" +
+          '<p class="muted">' + escapeHtml(b.author || "Unknown author") + "</p>" +
+          '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+          '<p class="faint" style="margin-top:6px;">' + b.currentPage + " / " + b.totalPages + " pages · " + pct + "%</p>" +
+        "</div>"
+      );
+    }).join("");
+    return '<div class="col">' + html + '</div><button class="fab" data-action="addBook">+</button>';
+  }
+
+  function renderBookForm(bookId) {
+    var book = bookId ? getBook(bookId) : null;
+    var title = book ? book.title : "";
+    var author = book ? book.author : "";
+    var totalPages = book ? book.totalPages : "";
+    return (
+      '<h2>' + (book ? "Edit Book" : "Add Book") + "</h2>" +
+      '<form data-form="bookForm">' +
+        '<div class="field"><label>Title</label><input name="title" required value="' + escapeHtml(title) + '"></div>' +
+        '<div class="field"><label>Author</label><input name="author" value="' + escapeHtml(author) + '"></div>' +
+        '<div class="field"><label>Total pages</label><input name="totalPages" type="number" min="1" required value="' + escapeHtml(totalPages) + '"></div>' +
+        '<div class="btn-row">' +
+          '<button type="submit" class="btn btn-primary btn-block">Save</button>' +
+          '<button type="button" class="btn btn-outline" data-action="back">Cancel</button>' +
+        "</div>" +
+      "</form>"
+    );
+  }
+
+  function submitBookForm(form, bookId) {
+    var title = fval(form, "title").trim();
+    var author = fval(form, "author").trim();
+    var totalPages = parseInt(fval(form, "totalPages"), 10) || 0;
+    if (!title || totalPages <= 0) { toast("Please fill in title and total pages"); return; }
+
+    if (bookId) {
+      var book = getBook(bookId);
+      book.title = title;
+      book.author = author;
+      book.totalPages = totalPages;
+      book.currentPage = clamp(book.currentPage, 0, totalPages);
+      saveData();
+      history.back();
+    } else {
+      var newBook = {
+        id: uid(), title: title, author: author, totalPages: totalPages,
+        currentPage: 0, status: "reading", dateAdded: todayStr(), dateFinished: null
+      };
+      state.books.push(newBook);
+      saveData();
+      history.back();
+      setTimeout(function () { navigateTo("bookDetail", { bookId: newBook.id }); }, 0);
+    }
+  }
+
+  // ---------- book detail view ----------
+
+  function renderBookDetail(bookId) {
+    var book = getBook(bookId);
+    if (!book) return '<div class="empty">Book not found.</div>';
+    var pct = book.totalPages > 0 ? clamp(Math.round((book.currentPage / book.totalPages) * 100), 0, 100) : 0;
+    var notes = state.notes.filter(function (n) { return n.bookId === bookId; })
+      .sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); });
+    var logs = state.logs.filter(function (l) { return l.bookId === bookId; })
+      .sort(function (a, b) { return b.date.localeCompare(a.date); }).slice(0, 5);
+
+    var notesHtml = notes.length === 0
+      ? '<p class="faint">No notes yet.</p>'
+      : notes.map(function (n) {
+          return (
+            '<div class="note-item">' +
+              '<div class="' + (n.isQuote ? "note-quote" : "") + '">' + escapeHtml(n.text) + "</div>" +
+              '<div class="row" style="margin-top:6px;">' +
+                '<span class="faint">' + niceDate(n.createdAt.slice(0, 10)) + (n.isQuote ? " · quote" : "") + "</span>" +
+                '<button class="btn btn-outline btn-icon" data-action="deleteNote" data-id="' + n.id + '">🗑️</button>' +
+              "</div>" +
+            "</div>"
+          );
+        }).join("");
+
+    var logsHtml = logs.length === 0
+      ? '<p class="faint">No reading logged yet.</p>'
+      : '<ul style="margin:0;padding-left:18px;">' + logs.map(function (l) {
+          return "<li>" + niceDate(l.date) + " — " + l.pagesRead + " pages</li>";
+        }).join("") + "</ul>";
+
+    return (
+      '<button class="btn btn-outline" data-action="back" style="margin-bottom:12px;">← Back</button>' +
+      '<div class="card">' +
+        '<div class="row">' +
+          "<h2>" + escapeHtml(book.title) + "</h2>" +
+          '<span class="tag tag-' + book.status + '">' + book.status + "</span>" +
+        "</div>" +
+        '<p class="muted">' + escapeHtml(book.author || "Unknown author") + "</p>" +
+        '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<p class="faint" style="margin-top:6px;">' + book.currentPage + " / " + book.totalPages + " pages · " + pct + "%</p>" +
+        '<div class="stepper" style="margin-top:12px;">' +
+          '<button class="btn btn-outline" data-action="pageStep" data-id="' + book.id + '" data-delta="-1">−</button>' +
+          '<input type="number" id="currentPageInput" value="' + book.currentPage + '" min="0" max="' + book.totalPages + '">' +
+          '<button class="btn btn-outline" data-action="pageStep" data-id="' + book.id + '" data-delta="1">+</button>' +
+        "</div>" +
+        '<button class="btn btn-primary btn-block" style="margin-top:10px;" data-action="setCurrentPage" data-id="' + book.id + '">Update page</button>' +
+        '<div class="btn-row" style="margin-top:12px;">' +
+          '<button class="btn btn-outline" data-action="setStatus" data-id="' + book.id + '" data-status="reading">📖 Reading</button>' +
+          '<button class="btn btn-outline" data-action="setStatus" data-id="' + book.id + '" data-status="finished">✓ Finished</button>' +
+          '<button class="btn btn-outline" data-action="setStatus" data-id="' + book.id + '" data-status="abandoned">⏸ Abandoned</button>' +
+        "</div>" +
+      "</div>" +
+
+      '<div class="card">' +
+        "<h3>Log today's reading</h3>" +
+        '<form data-form="logForm" data-id="' + book.id + '">' +
+          '<div class="field"><label>Pages read</label><input name="pagesRead" type="number" min="1" required></div>' +
+          '<button type="submit" class="btn btn-accent btn-block">Add to log</button>' +
+        "</form>" +
+        '<h3 style="margin-top:16px;">Recent activity</h3>' + logsHtml +
+      "</div>" +
+
+      '<div class="card">' +
+        "<h3>Notes & quotes</h3>" +
+        '<form data-form="noteForm" data-id="' + book.id + '">' +
+          '<div class="field"><textarea name="text" placeholder="Write a note or paste a quote..." required></textarea></div>' +
+          '<label class="checkline"><input type="checkbox" name="isQuote"> This is a quote</label>' +
+          '<button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;">Add note</button>' +
+        "</form>" +
+        '<div style="margin-top:14px;">' + notesHtml + "</div>" +
+      "</div>" +
+
+      '<div class="btn-row">' +
+        '<button class="btn btn-outline" data-action="editBook" data-id="' + book.id + '">Edit book</button>' +
+        '<button class="btn btn-danger" data-action="deleteBook" data-id="' + book.id + '">Delete book</button>' +
+      "</div>"
+    );
+  }
+
+  function setCurrentPage(bookId) {
+    var book = getBook(bookId);
+    var input = document.getElementById("currentPageInput");
+    var value = clamp(parseInt(input.value, 10) || 0, 0, book.totalPages);
+    book.currentPage = value;
+    if (value >= book.totalPages && book.status === "reading") {
+      book.status = "finished";
+      book.dateFinished = todayStr();
+    }
+    saveData();
+    render();
+  }
+
+  function pageStep(bookId, delta) {
+    var book = getBook(bookId);
+    book.currentPage = clamp(book.currentPage + delta, 0, book.totalPages);
+    saveData();
+    render();
+  }
+
+  function setStatus(bookId, status) {
+    var book = getBook(bookId);
+    book.status = status;
+    book.dateFinished = status === "finished" ? todayStr() : null;
+    saveData();
+    render();
+  }
+
+  function submitLogForm(form, bookId) {
+    var pages = parseInt(fval(form, "pagesRead"), 10) || 0;
+    if (pages <= 0) { toast("Enter a valid page count"); return; }
+    state.logs.push({ date: todayStr(), bookId: bookId, pagesRead: pages });
+    var book = getBook(bookId);
+    book.currentPage = clamp(book.currentPage + pages, 0, book.totalPages);
+    if (book.currentPage >= book.totalPages && book.status === "reading") {
+      book.status = "finished";
+      book.dateFinished = todayStr();
+    }
+    saveData();
+    toast("Logged " + pages + " pages");
+    render();
+  }
+
+  function submitNoteForm(form, bookId) {
+    var text = fval(form, "text").trim();
+    if (!text) return;
+    state.notes.push({
+      id: uid(), bookId: bookId, text: text, isQuote: fchecked(form, "isQuote"),
+      createdAt: new Date().toISOString(),
+      srs: { interval: 0, ease: 2.5, dueDate: todayStr() }
+    });
+    saveData();
+    render();
+  }
+
+  function deleteNote(id) {
+    showConfirm("Delete this note?", function () {
+      state.notes = state.notes.filter(function (n) { return n.id !== id; });
+      saveData();
+      render();
+    });
+  }
+
+  function deleteBook(id) {
+    showConfirm("Delete this book and all its notes and logs?", function () {
+      state.books = state.books.filter(function (b) { return b.id !== id; });
+      state.notes = state.notes.filter(function (n) { return n.bookId !== id; });
+      state.logs = state.logs.filter(function (l) { return l.bookId !== id; });
+      saveData();
+      navigateTo("library");
+    });
+  }
+
+  // ---------- review view ----------
+
+  function buildReviewQueue() {
+    reviewQueue = state.notes
+      .filter(function (n) { return n.srs.dueDate <= todayStr(); })
+      .sort(function (a, b) { return a.srs.dueDate.localeCompare(b.srs.dueDate); })
+      .map(function (n) { return n.id; });
+    reviewIndex = 0;
+    reviewRevealed = false;
+  }
+
+  function renderReview() {
+    if (nav._queueBuilt !== true) {
+      buildReviewQueue();
+      nav._queueBuilt = true;
+    }
+    if (reviewIndex >= reviewQueue.length || reviewQueue.length === 0) {
+      return (
+        '<div class="empty">' +
+          '<span class="icon">🎉</span>' +
+          "<p>All caught up!</p>" +
+          '<p class="faint">No flashcards due for review right now.</p>' +
+        "</div>"
+      );
+    }
+    var note = state.notes.find(function (n) { return n.id === reviewQueue[reviewIndex]; });
+    if (!note) { reviewIndex++; return renderReview(); }
+    var book = getBook(note.bookId);
+    var progress = (reviewIndex + 1) + " / " + reviewQueue.length;
+
+    var body = reviewRevealed
+      ? '<div class="content ' + (note.isQuote ? "note-quote" : "") + '">' + escapeHtml(note.text) + "</div>"
+      : '<div class="content faint">Tap "Show" to recall this note</div>';
+
+    var actions = reviewRevealed
+      ? '<div class="btn-row" style="justify-content:center;">' +
+          '<button class="btn btn-outline" data-action="gradeNote" data-grade="again">😵 Again</button>' +
+          '<button class="btn btn-outline" data-action="gradeNote" data-grade="good">🙂 Good</button>' +
+          '<button class="btn btn-accent" data-action="gradeNote" data-grade="easy">😎 Easy</button>' +
+        "</div>"
+      : '<button class="btn btn-primary btn-block" data-action="revealNote">Show</button>';
+
+    return (
+      '<p class="muted" style="text-align:center;">' + progress + "</p>" +
+      '<div class="flashcard">' +
+        '<div class="source">' + escapeHtml(book ? book.title : "Unknown book") + "</div>" +
+        body +
+      "</div>" +
+      '<div style="margin-top:16px;">' + actions + "</div>"
+    );
+  }
+
+  function revealNote() { reviewRevealed = true; render(); }
+
+  function gradeNote(grade) {
+    var note = state.notes.find(function (n) { return n.id === reviewQueue[reviewIndex]; });
+    if (!note) return;
+    var interval = note.srs.interval;
+    var ease = note.srs.ease;
+    if (grade === "again") {
+      interval = 1;
+      ease = Math.max(1.3, ease - 0.2);
+    } else if (grade === "good") {
+      interval = interval <= 0 ? 1 : Math.round(interval * ease);
+    } else if (grade === "easy") {
+      interval = interval <= 0 ? 4 : Math.round(interval * ease * 1.3);
+      ease = ease + 0.15;
+    }
+    interval = Math.max(1, interval);
+    note.srs = {
+      interval: interval,
+      ease: Math.round(ease * 100) / 100,
+      dueDate: addDays(todayStr(), interval)
+    };
+    saveData();
+    reviewIndex++;
+    reviewRevealed = false;
+    render();
+  }
+
+  // ---------- stats view ----------
+
+  function renderStats() {
+    var week = last7DaysPages();
+    var max = Math.max.apply(null, week.map(function (w) { return w.pages; }));
+    var bars = week.map(function (w) {
+      var h = max > 0 ? Math.max(3, Math.round((w.pages / max) * 100)) : 3;
+      return (
+        '<div class="bar-col">' +
+          '<div class="bar" style="height:' + h + 'px;"></div>' +
+          '<div class="bar-label">' + niceDate(w.date).split(" ")[1] + "</div>" +
+        "</div>"
+      );
+    }).join("");
+
+    var finishedCount = state.books.filter(function (b) { return b.status === "finished"; }).length;
+    var readingCount = state.books.filter(function (b) { return b.status === "reading"; }).length;
+
+    return (
+      "<h2>Stats</h2>" +
+      '<div class="stat-grid">' +
+        '<div class="stat-tile"><div class="num">🔥 ' + currentStreak() + '</div><div class="label">Day streak</div></div>' +
+        '<div class="stat-tile"><div class="num">' + avgPagesPerActiveDay() + '</div><div class="label">Avg pages/active day</div></div>' +
+        '<div class="stat-tile"><div class="num">' + totalPagesRead() + '</div><div class="label">Total pages read</div></div>' +
+        '<div class="stat-tile"><div class="num">' + finishedCount + '</div><div class="label">Books finished</div></div>' +
+      "</div>" +
+      '<div class="card" style="margin-top:14px;">' +
+        "<h3>Last 7 days</h3>" +
+        '<div class="barchart">' + bars + "</div>" +
+      "</div>" +
+      '<p class="faint">Currently reading ' + readingCount + " book" + (readingCount === 1 ? "" : "s") + ".</p>"
+    );
+  }
+
+  // ---------- settings view ----------
+
+  function renderSettings() {
+    return (
+      "<h2>Settings</h2>" +
+      '<div class="card">' +
+        "<h3>Export data</h3>" +
+        '<p class="muted">Copy this JSON somewhere safe as a backup.</p>' +
+        '<textarea class="jsonbox" id="exportBox" readonly>' + escapeHtml(JSON.stringify(state)) + "</textarea>" +
+        '<button class="btn btn-primary btn-block" style="margin-top:10px;" data-action="copyExport">Copy to clipboard</button>' +
+      "</div>" +
+      '<div class="card">' +
+        "<h3>Import data</h3>" +
+        '<p class="muted">Paste previously exported JSON below. This replaces all current data.</p>' +
+        '<textarea class="jsonbox" id="importBox" placeholder="Paste JSON here..."></textarea>' +
+        '<button class="btn btn-outline btn-block" style="margin-top:10px;" data-action="importData">Import</button>' +
+      "</div>" +
+      '<div class="card">' +
+        "<h3>Danger zone</h3>" +
+        '<button class="btn btn-danger btn-block" data-action="clearData">Clear all data</button>' +
+      "</div>"
+    );
+  }
+
+  function copyExport() {
+    var box = document.getElementById("exportBox");
+    box.select();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(box.value).then(function () {
+        toast("Copied to clipboard");
+      }).catch(function () {
+        toast("Copy failed — select the text manually");
+      });
+    } else {
+      try {
+        document.execCommand("copy");
+        toast("Copied to clipboard");
+      } catch (e) {
+        toast("Copy failed — select the text manually");
+      }
+    }
+  }
+
+  function importData() {
+    var raw = document.getElementById("importBox").value.trim();
+    if (!raw) return;
+    var parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      toast("Invalid JSON");
+      return;
+    }
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.books)) {
+      toast("This doesn't look like a Reading Tracker backup");
+      return;
+    }
+    showConfirm("Replace all current data with the imported backup?", function () {
+      state = {
+        books: Array.isArray(parsed.books) ? parsed.books : [],
+        logs: Array.isArray(parsed.logs) ? parsed.logs : [],
+        notes: Array.isArray(parsed.notes) ? parsed.notes : []
+      };
+      saveData();
+      toast("Data imported");
+      navigateTo("library");
+    });
+  }
+
+  function clearData() {
+    showConfirm("This will permanently delete all books, notes, and logs. Continue?", function () {
+      state = defaultData();
+      saveData();
+      toast("All data cleared");
+      navigateTo("library");
+    });
+  }
+
+  // ---------- event delegation ----------
+
+  document.getElementById("app").addEventListener("click", function (e) {
+    var navBtn = e.target.closest(".navbtn");
+    if (navBtn) { navigateTo(navBtn.dataset.nav); return; }
+
+    var actionEl = e.target.closest("[data-action]");
+    if (!actionEl) return;
+    var action = actionEl.dataset.action;
+    var id = actionEl.dataset.id;
+
+    if (action === "addBook") navigateTo("bookForm", { bookId: null });
+    else if (action === "editBook") navigateTo("bookForm", { bookId: id });
+    else if (action === "openBook") navigateTo("bookDetail", { bookId: id });
+    else if (action === "back") history.back();
+    else if (action === "pageStep") pageStep(id, parseInt(actionEl.dataset.delta, 10));
+    else if (action === "setCurrentPage") setCurrentPage(id);
+    else if (action === "setStatus") setStatus(id, actionEl.dataset.status);
+    else if (action === "deleteBook") deleteBook(id);
+    else if (action === "deleteNote") deleteNote(id);
+    else if (action === "revealNote") revealNote();
+    else if (action === "gradeNote") gradeNote(actionEl.dataset.grade);
+    else if (action === "copyExport") copyExport();
+    else if (action === "importData") importData();
+    else if (action === "clearData") clearData();
+    else if (action === "closeModal") closeModal();
+  });
+
+  document.getElementById("modalRoot").addEventListener("click", function (e) {
+    if (e.target.dataset.action === "closeModal") closeModal();
+  });
+
+  document.getElementById("app").addEventListener("submit", function (e) {
+    var form = e.target;
+    if (!form.dataset.form) return;
+    e.preventDefault();
+    if (form.dataset.form === "bookForm") submitBookForm(form, nav.bookId);
+    else if (form.dataset.form === "logForm") submitLogForm(form, form.dataset.id);
+    else if (form.dataset.form === "noteForm") submitNoteForm(form, form.dataset.id);
+  });
+
+  // ---------- init ----------
+
+  state = loadData();
+  replaceNav("library");
+})();
+</script>
+</body>
+</html>
