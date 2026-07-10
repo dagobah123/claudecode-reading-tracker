@@ -175,6 +175,66 @@
     background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
     padding: 10px 18px; border-radius: 20px; font-size: 14px; z-index: 100;
   }
+
+  /* ---------- LCARS theme (Star Trek TNG) ---------- */
+  body.theme-lcars {
+    --bg: #000000;
+    --surface: #000000;
+    --surface-2: #000000;
+    --border: #ff9900;
+    --text: #ffcc99;
+    --text-dim: #ff9900;
+    --text-faint: #9999cc;
+    --primary: #cc99cc;
+    --accent: #ff9900;
+    --danger: #cc6666;
+    --success: #99ccff;
+    font-family: "Antonio", "Roboto Condensed", sans-serif-condensed, "Arial Narrow", sans-serif;
+  }
+  body.theme-lcars h2, body.theme-lcars h3, body.theme-lcars .brand span,
+  body.theme-lcars .btn, body.theme-lcars .navbtn, body.theme-lcars .tag,
+  body.theme-lcars .field label {
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  body.theme-lcars h2 { color: #ff9900; }
+  body.theme-lcars h3 { color: #ffcc99; }
+  body.theme-lcars .topbar { border-bottom: 4px solid #ff9900; }
+  body.theme-lcars .brand span { color: #ff9900; }
+  body.theme-lcars .streak-badge { background: #ff9900; border: none; color: #000; }
+  body.theme-lcars .bottomnav {
+    border-top: 4px solid #ff9900; gap: 5px;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0));
+  }
+  body.theme-lcars .navbtn { background: #9999cc; color: #000; border-radius: 999px; font-weight: 700; min-height: 54px; }
+  body.theme-lcars .navbtn.active { background: #ff9900; color: #000; }
+  body.theme-lcars .navbtn .badge { background: #cc6666; color: #000; top: 2px; }
+  body.theme-lcars .card {
+    background: #000; border: 2px solid #2e2e45;
+    border-left: 16px solid #ff9900; border-radius: 24px 10px 10px 24px;
+  }
+  body.theme-lcars .card:nth-of-type(even) { border-left-color: #cc99cc; }
+  body.theme-lcars .btn { border-radius: 999px; }
+  body.theme-lcars .btn-primary { background: #cc99cc; color: #000; }
+  body.theme-lcars .btn-accent { background: #ff9900; color: #000; }
+  body.theme-lcars .btn-outline { border: 2px solid #9999cc; color: #ffcc99; }
+  body.theme-lcars .btn-danger { border: 2px solid #cc6666; color: #cc6666; }
+  body.theme-lcars .fab { background: #ff9900; color: #000; }
+  body.theme-lcars .field input, body.theme-lcars .field textarea, body.theme-lcars .field select,
+  body.theme-lcars .stepper input, body.theme-lcars textarea.jsonbox {
+    background: #000; border: 2px solid #9999cc; color: #ffcc99;
+  }
+  body.theme-lcars .progress-track { background: #1c1c2a; border-radius: 999px; }
+  body.theme-lcars .progress-fill { background: linear-gradient(90deg, #cc6666, #ff9900); }
+  body.theme-lcars .tag-reading { background: #ff9900; color: #000; }
+  body.theme-lcars .tag-finished { background: #99ccff; color: #000; }
+  body.theme-lcars .tag-abandoned { background: #cc6666; color: #000; }
+  body.theme-lcars .stat-tile { background: #000; border: 2px solid #9999cc; border-radius: 18px; }
+  body.theme-lcars .stat-tile .num { color: #ff9900; }
+  body.theme-lcars .barchart .bar { background: linear-gradient(180deg, #ff9900, #cc6666); }
+  body.theme-lcars .flashcard { background: #000; border: 2px solid #cc99cc; border-radius: 28px; }
+  body.theme-lcars .modal-sheet { background: #000; border: 2px solid #ff9900; border-radius: 24px; }
+  body.theme-lcars .toast { background: #ff9900; border: none; color: #000; }
+  body.theme-lcars .note-quote { border-left-color: #cc99cc; }
 </style>
 </head>
 <body>
@@ -182,11 +242,16 @@
   <header class="topbar">
     <div class="brand">
       <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="64" cy="64" r="60" fill="#312e81"/>
-        <path d="M64 42c-8-6-20-8-30-6v52c10-2 22 0 30 6 8-6 20-8 30-6V36c-10-2-22 0-30 6z" fill="#eef2ff"/>
-        <path d="M64 42v52" stroke="#c7d2fe" stroke-width="3"/>
-        <path d="M40 50c6-1 12 0 17 2M40 60c6-1 12 0 17 2M40 70c6-1 12 0 17 2M71 52c5-2 11-3 17-2M71 62c5-2 11-3 17-2M71 72c5-2 11-3 17-2" stroke="#818cf8" stroke-width="3" stroke-linecap="round" fill="none"/>
-        <path d="M82 30v26l6-5 6 5V30z" fill="#f59e0b"/>
+        <circle cx="64" cy="64" r="60" fill="#000000"/>
+        <circle cx="64" cy="64" r="55" fill="none" stroke="#ff9900" stroke-width="4"/>
+        <path d="M31,41a9,9 0 0 1 18,0v22a9,9 0 0 1 -18,0z" fill="#ff9900"/>
+        <path d="M79,41a9,9 0 0 1 18,0v22a9,9 0 0 1 -18,0z" fill="#ff9900"/>
+        <circle cx="40" cy="80" r="17" fill="#ff9900"/>
+        <circle cx="88" cy="80" r="17" fill="#ff9900"/>
+        <circle cx="40" cy="80" r="10" fill="#99ccff"/>
+        <circle cx="88" cy="80" r="10" fill="#99ccff"/>
+        <rect x="49" y="42" width="30" height="8" rx="4" fill="#ffcc99"/>
+        <circle cx="64" cy="57" r="7" fill="#cc99cc"/>
       </svg>
       <span>Reading Tracker</span>
     </div>
@@ -220,7 +285,11 @@
   // ---------- persistence ----------
 
   function defaultData() {
-    return { books: [], logs: [], notes: [] };
+    return { books: [], logs: [], notes: [], settings: { theme: "default" } };
+  }
+
+  function normalizeSettings(s) {
+    return { theme: s && s.theme === "lcars" ? "lcars" : "default" };
   }
 
   function loadData() {
@@ -231,15 +300,21 @@
       return {
         books: Array.isArray(parsed.books) ? parsed.books : [],
         logs: Array.isArray(parsed.logs) ? parsed.logs : [],
-        notes: Array.isArray(parsed.notes) ? parsed.notes : []
+        notes: Array.isArray(parsed.notes) ? parsed.notes : [],
+        settings: normalizeSettings(parsed.settings)
       };
     } catch (e) {
       return defaultData();
     }
   }
 
+  function applyTheme() {
+    document.body.classList.toggle("theme-lcars", state.settings.theme === "lcars");
+  }
+
   function saveData() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    applyTheme();
     updateBadges();
   }
 
@@ -760,6 +835,15 @@
     return (
       "<h2>Settings</h2>" +
       '<div class="card">' +
+        "<h3>Appearance</h3>" +
+        '<div class="field" style="margin-bottom:0;"><label>Theme</label>' +
+          '<select id="themeSelect">' +
+            '<option value="default"' + (state.settings.theme === "default" ? " selected" : "") + ">Indigo (default)</option>" +
+            '<option value="lcars"' + (state.settings.theme === "lcars" ? " selected" : "") + ">LCARS (Star Trek TNG)</option>" +
+          "</select>" +
+        "</div>" +
+      "</div>" +
+      '<div class="card">' +
         "<h3>Export data</h3>" +
         '<p class="muted">Copy this JSON somewhere safe as a backup.</p>' +
         '<textarea class="jsonbox" id="exportBox" readonly>' + escapeHtml(JSON.stringify(state)) + "</textarea>" +
@@ -815,7 +899,8 @@
       state = {
         books: Array.isArray(parsed.books) ? parsed.books : [],
         logs: Array.isArray(parsed.logs) ? parsed.logs : [],
-        notes: Array.isArray(parsed.notes) ? parsed.notes : []
+        notes: Array.isArray(parsed.notes) ? parsed.notes : [],
+        settings: parsed.settings ? normalizeSettings(parsed.settings) : state.settings
       };
       saveData();
       toast("Data imported");
@@ -864,6 +949,13 @@
     if (e.target.dataset.action === "closeModal") closeModal();
   });
 
+  document.getElementById("app").addEventListener("change", function (e) {
+    if (e.target.id === "themeSelect") {
+      state.settings.theme = e.target.value === "lcars" ? "lcars" : "default";
+      saveData();
+    }
+  });
+
   document.getElementById("app").addEventListener("submit", function (e) {
     var form = e.target;
     if (!form.dataset.form) return;
@@ -876,6 +968,7 @@
   // ---------- init ----------
 
   state = loadData();
+  applyTheme();
   replaceNav("library");
 })();
 </script>
