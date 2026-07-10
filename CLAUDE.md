@@ -41,14 +41,14 @@ reading-tracker/
 - Workflow: push from Termux with git, download the APK artifact from the Actions page on the phone, install it.
 
 ## Logo
-- Master file is `logo.svg`: a single page in LCARS peach with black text lines and a big lavender bookmark ribbon, on a black circle with a thin orange ring. Flat, modern, legible at 48px.
+- Master file is `logo.svg`: a single page in LCARS peach with black text lines and a big dark-violet bookmark ribbon, on a black circle with a thin orange ring. Flat, modern, legible at 48px.
 - Reference SVG (keep this as the source of truth):
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <circle cx="64" cy="64" r="60" fill="#000000"/>
   <circle cx="64" cy="64" r="55" fill="none" stroke="#ff9900" stroke-width="4"/>
   <rect x="40" y="30" width="48" height="68" rx="6" fill="#ffcc99"/>
-  <path d="M62,30h18v46l-9,-8 -9,8z" fill="#cc99cc"/>
+  <path d="M62,30h18v46l-9,-8 -9,8z" fill="#996699"/>
   <path d="M48,46h8M48,56h8M48,66h8M48,84h32M48,91h20" stroke="#000000" stroke-width="5" stroke-linecap="round" fill="none"/>
 </svg>
 ```
